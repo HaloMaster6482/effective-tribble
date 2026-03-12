@@ -18,6 +18,7 @@ A hackertyper-style hacking simulator that runs **entirely from a single local H
 | Action | What happens |
 |---|---|
 | **Type anything** | Realistic hacking code streams across the screen |
+| **Keep typing / complete segments** | Earn credits from data milestones and progress completion |
 | **F1** | 🔓 ACCESS GRANTED popup |
 | **F2** | 🔒 ACCESS DENIED popup |
 | **F3** | ⚡ Dramatic hack-sequence countdown |
@@ -31,3 +32,4 @@ A hackertyper-style hacking simulator that runs **entirely from a single local H
 - **Code sources** — Linux Kernel C · AI Python · React JS · Matrix Gibberish
 - **Speed** — 1 – 8 characters per keystroke
 - **Effects** — CRT scanlines · Matrix rain · Glitch · Sound
+- **Rewards** — Credits are shown in the header (`⛃`) and bonus toasts appear for key events

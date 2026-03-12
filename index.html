@@ -1,703 +1,885 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HackerSim — Elite Hacking Terminal</title>
   <style>
-/* ============================================================
+    /* ============================================================
    HackerSim — Elite Hacking Terminal
    style.css
    ============================================================ */
 
-/* ---------- CSS Variables (themes) ---------- */
-:root {
-  --bg:        #000;
-  --fg:        #00ff41;
-  --fg-dim:    #007a1e;
-  --fg-bright: #80ffaa;
-  --cursor:    #00ff41;
-  --header-bg: rgba(0, 30, 10, 0.85);
-  --overlay-bg: rgba(0, 0, 0, 0.92);
-  --glow:      0 0 8px #00ff41, 0 0 20px #00aa2a;
-  --font-size: 14px;
-}
-
-body.theme-amber {
-  --bg:        #0d0800;
-  --fg:        #ffb000;
-  --fg-dim:    #7a5500;
-  --fg-bright: #ffd060;
-  --cursor:    #ffb000;
-  --header-bg: rgba(30, 18, 0, 0.85);
-  --glow:      0 0 8px #ffb000, 0 0 20px #aa7700;
-}
-
-body.theme-blue {
-  --bg:        #000814;
-  --fg:        #00cfff;
-  --fg-dim:    #005a7a;
-  --fg-bright: #80eaff;
-  --cursor:    #00cfff;
-  --header-bg: rgba(0, 10, 30, 0.85);
-  --glow:      0 0 8px #00cfff, 0 0 20px #007aaa;
-}
-
-body.theme-white {
-  --bg:        #0a0a0a;
-  --fg:        #e8e8e8;
-  --fg-dim:    #666;
-  --fg-bright: #fff;
-  --cursor:    #e8e8e8;
-  --header-bg: rgba(20, 20, 20, 0.9);
-  --glow:      0 0 6px #aaa;
-}
-
-body.theme-red {
-  --bg:        #0d0000;
-  --fg:        #ff2222;
-  --fg-dim:    #7a0000;
-  --fg-bright: #ff8888;
-  --cursor:    #ff2222;
-  --header-bg: rgba(30, 0, 0, 0.85);
-  --glow:      0 0 8px #ff2222, 0 0 20px #aa0000;
-}
-
-/* ---------- Reset ---------- */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-  width: 100%; height: 100%;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: 'Courier New', Courier, monospace;
-  font-size: var(--font-size);
-  overflow: hidden;
-  user-select: none;
-}
-
-/* ---------- Scanlines ---------- */
-#scanlines {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 3px,
-    rgba(0,0,0,0.18) 3px,
-    rgba(0,0,0,0.18) 4px
-  );
-}
-
-/* ---------- CRT flicker ---------- */
-#crt-flicker {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 99;
-  opacity: 0;
-  background: rgba(255,255,255,0.03);
-  animation: flicker 8s infinite;
-}
-
-@keyframes flicker {
-  0%,100%  { opacity: 0; }
-  92%      { opacity: 0; }
-  92.5%    { opacity: 0.4; }
-  93%      { opacity: 0; }
-  95%      { opacity: 0.2; }
-  95.5%    { opacity: 0; }
-}
-
-/* ---------- Matrix rain canvas ---------- */
-#matrix-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.5s;
-}
-#matrix-canvas.visible { opacity: 0.18; }
-
-/* ---------- Terminal wrapper ---------- */
-#terminal-wrapper {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-}
-
-/* ---------- Terminal header ---------- */
-#terminal-header {
-  background: var(--header-bg);
-  border-bottom: 1px solid var(--fg-dim);
-  padding: 6px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-#terminal-title {
-  font-size: 13px;
-  color: var(--fg-dim);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-#status-text {
-  color: var(--fg-bright);
-  font-weight: bold;
-  text-shadow: var(--glow);
-  margin-left: 6px;
-  animation: status-blink 1.2s step-start infinite;
-}
-
-@keyframes status-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0.4; }
-}
-
-#header-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-#progress-label {
-  font-size: 11px;
-  color: var(--fg-dim);
-  white-space: nowrap;
-}
-
-#progress-bar-container {
-  width: 120px;
-  height: 8px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid var(--fg-dim);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-#progress-bar {
-  height: 100%;
-  width: 0%;
-  background: var(--fg);
-  box-shadow: var(--glow);
-  transition: width 0.3s ease;
-}
-
-#progress-percent {
-  font-size: 11px;
-  color: var(--fg);
-  min-width: 34px;
-  text-align: right;
-}
-
-#settings-btn {
-  background: transparent;
-  border: 1px solid var(--fg-dim);
-  color: var(--fg);
-  cursor: pointer;
-  font-size: 16px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-#settings-btn:hover {
-  background: rgba(255,255,255,0.08);
-  box-shadow: var(--glow);
-}
-
-/* ---------- Terminal output ---------- */
-#terminal-output {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 16px 4px;
-  white-space: pre-wrap;
-  word-break: break-all;
-  color: var(--fg);
-  text-shadow: var(--glow);
-  line-height: 1.55;
-  scrollbar-width: thin;
-  scrollbar-color: var(--fg-dim) transparent;
-}
-
-#terminal-output::-webkit-scrollbar { width: 6px; }
-#terminal-output::-webkit-scrollbar-thumb {
-  background: var(--fg-dim);
-  border-radius: 3px;
-}
-
-/* ---------- Cursor line ---------- */
-#cursor-line {
-  padding: 2px 16px 10px;
-  white-space: pre-wrap;
-  word-break: break-all;
-  color: var(--fg);
-  text-shadow: var(--glow);
-  flex-shrink: 0;
-  line-height: 1.55;
-}
-
-.cursor {
-  display: inline-block;
-  color: var(--cursor);
-  text-shadow: var(--glow);
-  animation: cursor-blink 0.9s step-start infinite;
-}
-
-@keyframes cursor-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-
-/* ---------- Access overlay ---------- */
-#access-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(4px);
-  transition: opacity 0.3s;
-}
-#access-overlay.hidden { display: none; }
-
-#access-box {
-  text-align: center;
-  border: 3px solid currentColor;
-  padding: 40px 60px;
-  border-radius: 8px;
-  animation: pop-in 0.25s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-@keyframes pop-in {
-  from { transform: scale(0.7); opacity: 0; }
-  to   { transform: scale(1);   opacity: 1; }
-}
-
-#access-box.granted {
-  color: #00ff41;
-  background: rgba(0, 60, 20, 0.7);
-  box-shadow: 0 0 40px #00ff41, 0 0 80px #00aa2a;
-}
-
-#access-box.denied {
-  color: #ff2222;
-  background: rgba(60, 0, 0, 0.7);
-  box-shadow: 0 0 40px #ff2222, 0 0 80px #aa0000;
-}
-
-#access-icon {
-  font-size: 80px;
-  margin-bottom: 16px;
-  animation: pulse-icon 0.8s infinite alternate;
-}
-
-@keyframes pulse-icon {
-  from { transform: scale(1); }
-  to   { transform: scale(1.08); }
-}
-
-#access-text {
-  font-size: 42px;
-  font-weight: bold;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-#access-subtext {
-  font-size: 15px;
-  letter-spacing: 0.08em;
-  opacity: 0.75;
-}
-
-/* ---------- Glitch class (applied programmatically) ---------- */
-@keyframes glitch {
-  0%   { clip-path: inset(40% 0 61% 0); transform: translate(-4px, 0); }
-  20%  { clip-path: inset(92% 0 1%  0); transform: translate(4px,  0); }
-  40%  { clip-path: inset(43% 0 1%  0); transform: translate(-2px, 0); }
-  60%  { clip-path: inset(25% 0 58% 0); transform: translate(3px,  0); }
-  80%  { clip-path: inset(54% 0 7%  0); transform: translate(-2px, 0); }
-  100% { clip-path: inset(58% 0 43% 0); transform: translate(0px,  0); }
-}
-
-#terminal-output.glitch::before,
-#terminal-output.glitch::after {
-  content: attr(data-text);
-  position: absolute;
-  left: 16px; right: 16px;
-  top: 0;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-#terminal-output.glitch::before {
-  color: #ff00c8;
-  animation: glitch 0.15s infinite linear alternate-reverse;
-  text-shadow: none;
-}
-
-#terminal-output.glitch::after {
-  color: #00fff9;
-  animation: glitch 0.18s 0.03s infinite linear alternate;
-  text-shadow: none;
-}
-
-#terminal-output { position: relative; }
-
-/* ---------- Settings panel ---------- */
-#settings-panel {
-  position: fixed;
-  top: 0; right: 0;
-  width: 340px;
-  max-width: 100vw;
-  height: 100%;
-  z-index: 300;
-  background: rgba(5, 8, 5, 0.97);
-  border-left: 1px solid var(--fg-dim);
-  overflow-y: auto;
-  transform: translateX(0);
-  transition: transform 0.3s ease;
-  scrollbar-width: thin;
-  scrollbar-color: var(--fg-dim) transparent;
-}
-
-#settings-panel.hidden {
-  transform: translateX(100%);
-  pointer-events: none;
-}
-
-#settings-inner {
-  padding: 24px 20px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  color: var(--fg);
-}
-
-#settings-inner h2 {
-  font-size: 20px;
-  letter-spacing: 0.1em;
-  border-bottom: 1px solid var(--fg-dim);
-  padding-bottom: 10px;
-  text-shadow: var(--glow);
-}
-
-#settings-inner h3 {
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  color: var(--fg-dim);
-  margin-bottom: 8px;
-}
-
-#settings-close {
-  position: absolute;
-  top: 18px; right: 18px;
-  background: transparent;
-  border: 1px solid var(--fg-dim);
-  color: var(--fg);
-  cursor: pointer;
-  font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 4px;
-}
-#settings-close:hover { background: rgba(255,255,255,0.06); }
-
-.btn-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.btn-group button {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--fg-dim);
-  color: var(--fg);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  padding: 6px 14px;
-  border-radius: 4px;
-  transition: background 0.15s, box-shadow 0.15s;
-}
-
-.btn-group button:hover {
-  background: rgba(255,255,255,0.1);
-}
-
-.btn-group button.active {
-  background: var(--fg);
-  color: var(--bg);
-  box-shadow: var(--glow);
-}
-
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 3px 0;
-}
-
-.toggle-label input[type="checkbox"] {
-  accent-color: var(--fg);
-  width: 16px; height: 16px;
-  cursor: pointer;
-}
-
-.shortcuts-table {
-  border-collapse: collapse;
-  font-size: 12px;
-  width: 100%;
-}
-.shortcuts-table td {
-  padding: 4px 8px 4px 0;
-  vertical-align: top;
-  color: var(--fg);
-}
-.shortcuts-table td:first-child {
-  white-space: nowrap;
-}
-
-kbd {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid var(--fg-dim);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: inherit;
-  font-size: 11px;
-}
-
-.settings-hint {
-  font-size: 11px;
-  color: var(--fg-dim);
-  text-align: center;
-  margin-top: 10px;
-}
-
-/* ---------- Splash screen ---------- */
-#splash {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.6s ease;
-}
-
-#splash.hide {
-  opacity: 0;
-  pointer-events: none;
-}
-
-#splash-inner {
-  text-align: center;
-  color: var(--fg);
-}
-
-#splash-logo {
-  font-size: clamp(7px, 1.4vw, 14px);
-  line-height: 1.3;
-  color: var(--fg);
-  text-shadow: var(--glow);
-  margin-bottom: 18px;
-  white-space: pre;
-  animation: fadeInDown 0.8s ease;
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-#splash-tagline {
-  font-size: 16px;
-  letter-spacing: 0.15em;
-  color: var(--fg-bright);
-  text-shadow: var(--glow);
-  margin-bottom: 28px;
-}
-
-#splash-instruction {
-  font-size: 13px;
-  color: var(--fg-dim);
-  letter-spacing: 0.1em;
-  animation: pulse-text 1.6s ease-in-out infinite;
-}
-
-@keyframes pulse-text {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
-}
-
-#splash-loader {
-  width: 260px;
-  height: 4px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid var(--fg-dim);
-  border-radius: 3px;
-  margin: 24px auto 0;
-  overflow: hidden;
-}
-
-#splash-loader-bar {
-  height: 100%;
-  width: 0%;
-  background: var(--fg);
-  box-shadow: var(--glow);
-  transition: width 0.1s linear;
-}
-
-/* ---------- Hack sequence overlay ---------- */
-#hack-sequence {
-  position: fixed;
-  inset: 0;
-  z-index: 150;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.88);
-  color: var(--fg);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-#hack-sequence.visible { opacity: 1; }
-
-#hack-sequence-title {
-  font-size: 28px;
-  letter-spacing: 0.2em;
-  text-shadow: var(--glow);
-  margin-bottom: 20px;
-}
-
-#hack-sequence-count {
-  font-size: 80px;
-  font-weight: bold;
-  text-shadow: var(--glow);
-  animation: count-pulse 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes count-pulse {
-  from { transform: scale(1); }
-  to   { transform: scale(1.1); }
-}
-
-#hack-sequence-status {
-  font-size: 14px;
-  color: var(--fg-dim);
-  margin-top: 18px;
-  letter-spacing: 0.15em;
-}
-
-/* ---------- Ticker bar ---------- */
-#ticker-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  height: 28px;
-  background: var(--header-bg);
-  border-top: 1px solid var(--fg-dim);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-}
-
-#ticker-track {
-  display: flex;
-  gap: 0;
-  white-space: nowrap;
-  animation: ticker-scroll 40s linear infinite;
-}
-
-/* Duplicate content is added by JS so the loop is seamless */
-@keyframes ticker-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-
-.ticker-item {
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: var(--fg);
-  padding: 0 40px;
-  opacity: 0.85;
-}
-
-
-/* Make terminal wrapper leave room for ticker */
-#terminal-wrapper {
-  bottom: 28px !important;
-}
-
-/* ---------- Splash instructions ---------- */
-#splash-how-to {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--fg-dim);
-  border-radius: 6px;
-  padding: 14px 20px;
-  margin: 16px auto 20px;
-  max-width: 520px;
-  text-align: left;
-}
-
-.how-step {
-  font-size: 12px;
-  color: var(--fg);
-  margin: 5px 0;
-  line-height: 1.6;
-  letter-spacing: 0.03em;
-}
-
-.how-step strong {
-  color: var(--fg-bright);
-  text-shadow: var(--glow);
-  font-size: 13px;
-}
-
-.how-step kbd {
-  background: rgba(255,255,255,0.12);
-  border: 1px solid var(--fg-dim);
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-size: 11px;
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 600px) {
-  :root { --font-size: 12px; }
-  #access-box { padding: 24px 28px; }
-  #access-text { font-size: 28px; }
-  #access-icon { font-size: 52px; }
-  #splash-logo { font-size: 7px; }
-  #settings-panel { width: 100%; border-left: none; }
-  #progress-bar-container { width: 70px; }
-  #splash-how-to { margin: 12px 16px 16px; }
-}
-
+    /* ---------- CSS Variables (themes) ---------- */
+    :root {
+      --bg: #000;
+      --fg: #00ff41;
+      --fg-dim: #007a1e;
+      --fg-bright: #80ffaa;
+      --cursor: #00ff41;
+      --header-bg: rgba(0, 30, 10, 0.85);
+      --overlay-bg: rgba(0, 0, 0, 0.92);
+      --glow: 0 0 8px #00ff41, 0 0 20px #00aa2a;
+      --font-size: 14px;
+    }
+
+    body.theme-amber {
+      --bg: #0d0800;
+      --fg: #ffb000;
+      --fg-dim: #7a5500;
+      --fg-bright: #ffd060;
+      --cursor: #ffb000;
+      --header-bg: rgba(30, 18, 0, 0.85);
+      --glow: 0 0 8px #ffb000, 0 0 20px #aa7700;
+    }
+
+    body.theme-blue {
+      --bg: #000814;
+      --fg: #00cfff;
+      --fg-dim: #005a7a;
+      --fg-bright: #80eaff;
+      --cursor: #00cfff;
+      --header-bg: rgba(0, 10, 30, 0.85);
+      --glow: 0 0 8px #00cfff, 0 0 20px #007aaa;
+    }
+
+    body.theme-white {
+      --bg: #0a0a0a;
+      --fg: #e8e8e8;
+      --fg-dim: #666;
+      --fg-bright: #fff;
+      --cursor: #e8e8e8;
+      --header-bg: rgba(20, 20, 20, 0.9);
+      --glow: 0 0 6px #aaa;
+    }
+
+    body.theme-red {
+      --bg: #0d0000;
+      --fg: #ff2222;
+      --fg-dim: #7a0000;
+      --fg-bright: #ff8888;
+      --cursor: #ff2222;
+      --header-bg: rgba(30, 0, 0, 0.85);
+      --glow: 0 0 8px #ff2222, 0 0 20px #aa0000;
+    }
+
+    /* ---------- Reset ---------- */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: var(--font-size);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ---------- Scanlines ---------- */
+    #scanlines {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: repeating-linear-gradient(to bottom,
+          transparent 0px,
+          transparent 3px,
+          rgba(0, 0, 0, 0.18) 3px,
+          rgba(0, 0, 0, 0.18) 4px);
+    }
+
+    /* ---------- CRT flicker ---------- */
+    #crt-flicker {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      opacity: 0;
+      background: rgba(255, 255, 255, 0.03);
+      animation: flicker 8s infinite;
+    }
+
+    @keyframes flicker {
+
+      0%,
+      100% {
+        opacity: 0;
+      }
+
+      92% {
+        opacity: 0;
+      }
+
+      92.5% {
+        opacity: 0.4;
+      }
+
+      93% {
+        opacity: 0;
+      }
+
+      95% {
+        opacity: 0.2;
+      }
+
+      95.5% {
+        opacity: 0;
+      }
+    }
+
+    /* ---------- Matrix rain canvas ---------- */
+    #matrix-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    #matrix-canvas.visible {
+      opacity: 0.18;
+    }
+
+    /* ---------- Terminal wrapper ---------- */
+    #terminal-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+
+    /* ---------- Terminal header ---------- */
+    #terminal-header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--fg-dim);
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    #terminal-title {
+      font-size: 13px;
+      color: var(--fg-dim);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    #status-text {
+      color: var(--fg-bright);
+      font-weight: bold;
+      text-shadow: var(--glow);
+      margin-left: 6px;
+      animation: status-blink 1.2s step-start infinite;
+    }
+
+    @keyframes status-blink {
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: 0.4;
+      }
+    }
+
+    #header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    #progress-label {
+      font-size: 11px;
+      color: var(--fg-dim);
+      white-space: nowrap;
+    }
+
+    #progress-bar-container {
+      width: 120px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--fg-dim);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--fg);
+      box-shadow: var(--glow);
+      transition: width 0.3s ease;
+    }
+
+    #progress-percent {
+      font-size: 11px;
+      color: var(--fg);
+      min-width: 34px;
+      text-align: right;
+    }
+
+    #reward-balance {
+      font-size: 11px;
+      color: var(--fg-bright);
+      border: 1px solid var(--fg-dim);
+      border-radius: 4px;
+      padding: 1px 7px;
+      background: rgba(255, 255, 255, 0.08);
+      min-width: 70px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #settings-btn {
+      background: transparent;
+      border: 1px solid var(--fg-dim);
+      color: var(--fg);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    #settings-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: var(--glow);
+    }
+
+    /* ---------- Terminal output ---------- */
+    #terminal-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px 4px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--fg);
+      text-shadow: var(--glow);
+      line-height: 1.55;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fg-dim) transparent;
+    }
+
+    #terminal-output::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #terminal-output::-webkit-scrollbar-thumb {
+      background: var(--fg-dim);
+      border-radius: 3px;
+    }
+
+    /* ---------- Cursor line ---------- */
+    #cursor-line {
+      padding: 2px 16px 10px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--fg);
+      text-shadow: var(--glow);
+      flex-shrink: 0;
+      line-height: 1.55;
+    }
+
+    .cursor {
+      display: inline-block;
+      color: var(--cursor);
+      text-shadow: var(--glow);
+      animation: cursor-blink 0.9s step-start infinite;
+    }
+
+    @keyframes cursor-blink {
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* ---------- Access overlay ---------- */
+    #access-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      transition: opacity 0.3s;
+    }
+
+    #access-overlay.hidden {
+      display: none;
+    }
+
+    #access-box {
+      text-align: center;
+      border: 3px solid currentColor;
+      padding: 40px 60px;
+      border-radius: 8px;
+      animation: pop-in 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes pop-in {
+      from {
+        transform: scale(0.7);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    #access-box.granted {
+      color: #00ff41;
+      background: rgba(0, 60, 20, 0.7);
+      box-shadow: 0 0 40px #00ff41, 0 0 80px #00aa2a;
+    }
+
+    #access-box.denied {
+      color: #ff2222;
+      background: rgba(60, 0, 0, 0.7);
+      box-shadow: 0 0 40px #ff2222, 0 0 80px #aa0000;
+    }
+
+    #access-icon {
+      font-size: 80px;
+      margin-bottom: 16px;
+      animation: pulse-icon 0.8s infinite alternate;
+    }
+
+    @keyframes pulse-icon {
+      from {
+        transform: scale(1);
+      }
+
+      to {
+        transform: scale(1.08);
+      }
+    }
+
+    #access-text {
+      font-size: 42px;
+      font-weight: bold;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    #access-subtext {
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      opacity: 0.75;
+    }
+
+    #reward-toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 250;
+      padding: 8px 12px;
+      border: 1px solid var(--fg-dim);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.88);
+      color: var(--fg-bright);
+      text-shadow: var(--glow);
+      transform: translateY(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    #reward-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ---------- Glitch class (applied programmatically) ---------- */
+    @keyframes glitch {
+      0% {
+        clip-path: inset(40% 0 61% 0);
+        transform: translate(-4px, 0);
+      }
+
+      20% {
+        clip-path: inset(92% 0 1% 0);
+        transform: translate(4px, 0);
+      }
+
+      40% {
+        clip-path: inset(43% 0 1% 0);
+        transform: translate(-2px, 0);
+      }
+
+      60% {
+        clip-path: inset(25% 0 58% 0);
+        transform: translate(3px, 0);
+      }
+
+      80% {
+        clip-path: inset(54% 0 7% 0);
+        transform: translate(-2px, 0);
+      }
+
+      100% {
+        clip-path: inset(58% 0 43% 0);
+        transform: translate(0px, 0);
+      }
+    }
+
+    #terminal-output.glitch::before,
+    #terminal-output.glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    #terminal-output.glitch::before {
+      color: #ff00c8;
+      animation: glitch 0.15s infinite linear alternate-reverse;
+      text-shadow: none;
+    }
+
+    #terminal-output.glitch::after {
+      color: #00fff9;
+      animation: glitch 0.18s 0.03s infinite linear alternate;
+      text-shadow: none;
+    }
+
+    #terminal-output {
+      position: relative;
+    }
+
+    /* ---------- Settings panel ---------- */
+    #settings-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 340px;
+      max-width: 100vw;
+      height: 100%;
+      z-index: 300;
+      background: rgba(5, 8, 5, 0.97);
+      border-left: 1px solid var(--fg-dim);
+      overflow-y: auto;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fg-dim) transparent;
+    }
+
+    #settings-panel.hidden {
+      transform: translateX(100%);
+      pointer-events: none;
+    }
+
+    #settings-inner {
+      padding: 24px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      color: var(--fg);
+    }
+
+    #settings-inner h2 {
+      font-size: 20px;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--fg-dim);
+      padding-bottom: 10px;
+      text-shadow: var(--glow);
+    }
+
+    #settings-inner h3 {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      color: var(--fg-dim);
+      margin-bottom: 8px;
+    }
+
+    #settings-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: transparent;
+      border: 1px solid var(--fg-dim);
+      color: var(--fg);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    #settings-close:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn-group button {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--fg-dim);
+      color: var(--fg);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 4px;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+
+    .btn-group button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-group button.active {
+      background: var(--fg);
+      color: var(--bg);
+      box-shadow: var(--glow);
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 3px 0;
+    }
+
+    .toggle-label input[type="checkbox"] {
+      accent-color: var(--fg);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .shortcuts-table {
+      border-collapse: collapse;
+      font-size: 12px;
+      width: 100%;
+    }
+
+    .shortcuts-table td {
+      padding: 4px 8px 4px 0;
+      vertical-align: top;
+      color: var(--fg);
+    }
+
+    .shortcuts-table td:first-child {
+      white-space: nowrap;
+    }
+
+    kbd {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--fg-dim);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: inherit;
+      font-size: 11px;
+    }
+
+    .settings-hint {
+      font-size: 11px;
+      color: var(--fg-dim);
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    /* ---------- Splash screen ---------- */
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease;
+    }
+
+    #splash.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #splash-inner {
+      text-align: center;
+      color: var(--fg);
+    }
+
+    #splash-logo {
+      font-size: clamp(7px, 1.4vw, 14px);
+      line-height: 1.3;
+      color: var(--fg);
+      text-shadow: var(--glow);
+      margin-bottom: 18px;
+      white-space: pre;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #splash-tagline {
+      font-size: 16px;
+      letter-spacing: 0.15em;
+      color: var(--fg-bright);
+      text-shadow: var(--glow);
+      margin-bottom: 28px;
+    }
+
+    #splash-instruction {
+      font-size: 13px;
+      color: var(--fg-dim);
+      letter-spacing: 0.1em;
+      animation: pulse-text 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse-text {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    #splash-loader {
+      width: 260px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--fg-dim);
+      border-radius: 3px;
+      margin: 24px auto 0;
+      overflow: hidden;
+    }
+
+    #splash-loader-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--fg);
+      box-shadow: var(--glow);
+      transition: width 0.1s linear;
+    }
+
+    /* ---------- Hack sequence overlay ---------- */
+    #hack-sequence {
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.88);
+      color: var(--fg);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #hack-sequence.visible {
+      opacity: 1;
+    }
+
+    #hack-sequence-title {
+      font-size: 28px;
+      letter-spacing: 0.2em;
+      text-shadow: var(--glow);
+      margin-bottom: 20px;
+    }
+
+    #hack-sequence-count {
+      font-size: 80px;
+      font-weight: bold;
+      text-shadow: var(--glow);
+      animation: count-pulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes count-pulse {
+      from {
+        transform: scale(1);
+      }
+
+      to {
+        transform: scale(1.1);
+      }
+    }
+
+    #hack-sequence-status {
+      font-size: 14px;
+      color: var(--fg-dim);
+      margin-top: 18px;
+      letter-spacing: 0.15em;
+    }
+
+    /* ---------- Ticker bar ---------- */
+    #ticker-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      height: 28px;
+      background: var(--header-bg);
+      border-top: 1px solid var(--fg-dim);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    #ticker-track {
+      display: flex;
+      gap: 0;
+      white-space: nowrap;
+      animation: ticker-scroll 40s linear infinite;
+    }
+
+    /* Duplicate content is added by JS so the loop is seamless */
+    @keyframes ticker-scroll {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    .ticker-item {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--fg);
+      padding: 0 40px;
+      opacity: 0.85;
+    }
+
+
+    /* Make terminal wrapper leave room for ticker */
+    #terminal-wrapper {
+      bottom: 28px !important;
+    }
+
+    /* ---------- Splash instructions ---------- */
+    #splash-how-to {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--fg-dim);
+      border-radius: 6px;
+      padding: 14px 20px;
+      margin: 16px auto 20px;
+      max-width: 520px;
+      text-align: left;
+    }
+
+    .how-step {
+      font-size: 12px;
+      color: var(--fg);
+      margin: 5px 0;
+      line-height: 1.6;
+      letter-spacing: 0.03em;
+    }
+
+    .how-step strong {
+      color: var(--fg-bright);
+      text-shadow: var(--glow);
+      font-size: 13px;
+    }
+
+    .how-step kbd {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--fg-dim);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 600px) {
+      :root {
+        --font-size: 12px;
+      }
+
+      #access-box {
+        padding: 24px 28px;
+      }
+
+      #access-text {
+        font-size: 28px;
+      }
+
+      #access-icon {
+        font-size: 52px;
+      }
+
+      #splash-logo {
+        font-size: 7px;
+      }
+
+      #settings-panel {
+        width: 100%;
+        border-left: none;
+      }
+
+      #progress-bar-container {
+        width: 70px;
+      }
+
+      #splash-how-to {
+        margin: 12px 16px 16px;
+      }
+    }
   </style>
 </head>
+
 <body class="theme-green">
 
   <!-- Scanline overlay -->
@@ -715,8 +897,11 @@ kbd {
       <span id="terminal-title">root@hackersim:~# <span id="status-text">READY</span></span>
       <div id="header-controls">
         <span id="progress-label">PROGRESS:</span>
-        <div id="progress-bar-container"><div id="progress-bar"></div></div>
+        <div id="progress-bar-container">
+          <div id="progress-bar"></div>
+        </div>
         <span id="progress-percent">0%</span>
+        <span id="reward-balance">⛃ 0</span>
         <button id="settings-btn" title="Settings">⚙</button>
       </div>
     </div>
@@ -734,6 +919,8 @@ kbd {
       <div id="access-subtext"></div>
     </div>
   </div>
+
+  <div id="reward-toast" aria-live="polite"></div>
 
   <!-- Settings panel -->
   <div id="settings-panel" class="hidden">
@@ -796,12 +983,30 @@ kbd {
       <section>
         <h3>Shortcuts</h3>
         <table class="shortcuts-table">
-          <tr><td><kbd>F1</kbd></td><td>ACCESS GRANTED popup</td></tr>
-          <tr><td><kbd>F2</kbd></td><td>ACCESS DENIED popup</td></tr>
-          <tr><td><kbd>F3</kbd></td><td>Initiate HACK SEQUENCE</td></tr>
-          <tr><td><kbd>F4</kbd></td><td>Screen glitch burst</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td>Clear terminal</td></tr>
-          <tr><td><kbd>F11</kbd></td><td>Fullscreen</td></tr>
+          <tr>
+            <td><kbd>F1</kbd></td>
+            <td>ACCESS GRANTED popup</td>
+          </tr>
+          <tr>
+            <td><kbd>F2</kbd></td>
+            <td>ACCESS DENIED popup</td>
+          </tr>
+          <tr>
+            <td><kbd>F3</kbd></td>
+            <td>Initiate HACK SEQUENCE</td>
+          </tr>
+          <tr>
+            <td><kbd>F4</kbd></td>
+            <td>Screen glitch burst</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>Clear terminal</td>
+          </tr>
+          <tr>
+            <td><kbd>F11</kbd></td>
+            <td>Fullscreen</td>
+          </tr>
         </table>
       </section>
 
@@ -832,7 +1037,9 @@ kbd {
       </div>
 
       <p id="splash-instruction">Press any key or tap to begin…</p>
-      <div id="splash-loader"><div id="splash-loader-bar"></div></div>
+      <div id="splash-loader">
+        <div id="splash-loader-bar"></div>
+      </div>
     </div>
   </div>
 
@@ -847,16 +1054,16 @@ kbd {
   </div>
 
   <script>
-/* ============================================================
-   HackerSim — Elite Hacking Terminal
-   script.js
-   ============================================================ */
+    /* ============================================================
+       HackerSim — Elite Hacking Terminal
+       script.js
+       ============================================================ */
 
-'use strict';
+    'use strict';
 
-/* ── Code sources ─────────────────────────────────────────── */
-const CODE_SOURCES = {
-  linux: `/*
+    /* ── Code sources ─────────────────────────────────────────── */
+    const CODE_SOURCES = {
+      linux: `/*
  * linux/kernel/sched/core.c
  *
  * Kernel scheduler and related syscalls
@@ -1247,7 +1454,7 @@ void __init sched_init(void)
 }
 `,
 
-  python: `#!/usr/bin/env python3
+      python: `#!/usr/bin/env python3
 """
 neural_network.py - Deep Learning Framework
 A minimal but complete neural network implementation.
@@ -1533,7 +1740,7 @@ if __name__ == '__main__':
         logger.info(f'  {xi} -> {pi[0]:.4f}')
 `,
 
-  js: `/**
+      js: `/**
  * ReactiveUI Framework — core/reconciler.js
  * A lightweight virtual-DOM reconciler with hooks support.
  */
@@ -1872,7 +2079,7 @@ export default {
 };
 `,
 
-  matrix: `01001000 01000101 01000001 01001100 01010100 01001000 00111010 00100000 00110001 00110000 00110000 00100101
+      matrix: `01001000 01000101 01000001 01001100 01010100 01001000 00111010 00100000 00110001 00110000 00110000 00100101
 SYSTEM STATUS: NOMINAL | THREADS: 2048 | MEM: 98.2 GB | SWAP: 0 B
 > injecting payload...............................................OK
 > bypassing firewall [██████████████████████████████████████] 100%
@@ -1939,460 +2146,507 @@ mysql> SELECT * FROM user_credentials LIMIT 5;
 >> SELF-DESTRUCT SEQUENCE INITIATED........3...2...1...
 >> TRACES REMOVED.
 `,
-};
+    };
 
-/* ── Settings state ───────────────────────────────────────── */
-const state = {
-  codeKey:     'linux',
-  charsPerKey: 3,
-  codePos:     0,
-  typedCount:  0,
-  theme:       'green',
-  glitchOn:    true,
-  soundOn:     true,
-  matrixOn:    false,
-  scanlinesOn: true,
-  started:     false,
-};
+    /* ── Settings state ───────────────────────────────────────── */
+    const state = {
+      codeKey: 'linux',
+      charsPerKey: 3,
+      codePos: 0,
+      typedCount: 0,
+      credits: 0,
+      rewardMeter: 0,
+      rewardCooldowns: {},
+      theme: 'green',
+      glitchOn: true,
+      soundOn: true,
+      matrixOn: false,
+      scanlinesOn: true,
+      started: false,
+    };
 
-/* ── DOM refs ─────────────────────────────────────────────── */
-const $output       = document.getElementById('terminal-output');
-const $cursor       = document.getElementById('blink-cursor');
-const $statusText   = document.getElementById('status-text');
-const $progressBar  = document.getElementById('progress-bar');
-const $progressPct  = document.getElementById('progress-percent');
-const $settingsBtn  = document.getElementById('settings-btn');
-const $settingsPanel = document.getElementById('settings-panel');
-const $settingsClose = document.getElementById('settings-close');
-const $accessOverlay = document.getElementById('access-overlay');
-const $accessBox    = document.getElementById('access-box');
-const $accessIcon   = document.getElementById('access-icon');
-const $accessText   = document.getElementById('access-text');
-const $accessSubtext = document.getElementById('access-subtext');
-const $splash       = document.getElementById('splash');
-const $splashLoaderBar = document.getElementById('splash-loader-bar');
-const $scanlines    = document.getElementById('scanlines');
-const $matrixCanvas = document.getElementById('matrix-canvas');
+    /* ── DOM refs ─────────────────────────────────────────────── */
+    const $output = document.getElementById('terminal-output');
+    const $cursor = document.getElementById('blink-cursor');
+    const $statusText = document.getElementById('status-text');
+    const $progressBar = document.getElementById('progress-bar');
+    const $progressPct = document.getElementById('progress-percent');
+    const $rewardBalance = document.getElementById('reward-balance');
+    const $settingsBtn = document.getElementById('settings-btn');
+    const $settingsPanel = document.getElementById('settings-panel');
+    const $settingsClose = document.getElementById('settings-close');
+    const $accessOverlay = document.getElementById('access-overlay');
+    const $accessBox = document.getElementById('access-box');
+    const $accessIcon = document.getElementById('access-icon');
+    const $accessText = document.getElementById('access-text');
+    const $accessSubtext = document.getElementById('access-subtext');
+    const $rewardToast = document.getElementById('reward-toast');
+    const $splash = document.getElementById('splash');
+    const $splashLoaderBar = document.getElementById('splash-loader-bar');
+    const $scanlines = document.getElementById('scanlines');
+    const $matrixCanvas = document.getElementById('matrix-canvas');
 
-/* ── Audio (Web Audio API) ────────────────────────────────── */
-let audioCtx = null;
+    /* ── Audio (Web Audio API) ────────────────────────────────── */
+    let audioCtx = null;
 
-function ensureAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    catch (_) { audioCtx = null; }
-  }
-}
-
-function playKeyClick() {
-  if (!state.soundOn || !audioCtx) return;
-  try {
-    const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.03, audioCtx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < data.length; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.008));
+    function ensureAudio() {
+      if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (_) { audioCtx = null; }
+      }
     }
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf;
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0.12;
-    src.connect(gain);
-    gain.connect(audioCtx.destination);
-    src.start();
-  } catch (_) {}
-}
 
-function playAccessSound(granted) {
-  if (!state.soundOn || !audioCtx) return;
-  try {
-    const osc  = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = granted ? 'square' : 'sawtooth';
-    const freqs = granted ? [880, 1320, 1760] : [440, 220, 165];
-    const now = audioCtx.currentTime;
-    osc.frequency.setValueAtTime(freqs[0], now);
-    osc.frequency.setValueAtTime(freqs[1], now + 0.1);
-    osc.frequency.setValueAtTime(freqs[2], now + 0.2);
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-    osc.start(now);
-    osc.stop(now + 0.5);
-  } catch (_) {}
-}
+    function playKeyClick() {
+      if (!state.soundOn || !audioCtx) return;
+      try {
+        const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.03, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.008));
+        }
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.12;
+        src.connect(gain);
+        gain.connect(audioCtx.destination);
+        src.start();
+      } catch (_) { }
+    }
 
-function playHackSound() {
-  if (!state.soundOn || !audioCtx) return;
-  try {
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => {
-        const osc  = audioCtx.createOscillator();
+    function playAccessSound(granted) {
+      if (!state.soundOn || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        osc.type = 'square';
-        osc.frequency.value = 200 + Math.random() * 600;
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.15);
-      }, i * 120);
+        osc.type = granted ? 'square' : 'sawtooth';
+        const freqs = granted ? [880, 1320, 1760] : [440, 220, 165];
+        const now = audioCtx.currentTime;
+        osc.frequency.setValueAtTime(freqs[0], now);
+        osc.frequency.setValueAtTime(freqs[1], now + 0.1);
+        osc.frequency.setValueAtTime(freqs[2], now + 0.2);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } catch (_) { }
     }
-  } catch (_) {}
-}
 
-/* ── Matrix rain ──────────────────────────────────────────── */
-let matrixAnimId = null;
-const matrixCtx  = $matrixCanvas.getContext('2d');
-const MATRIX_CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()';
-
-function resizeMatrix() {
-  $matrixCanvas.width  = window.innerWidth;
-  $matrixCanvas.height = window.innerHeight;
-}
-
-let matrixDrops = [];
-
-function initMatrixDrops() {
-  resizeMatrix();
-  const cols = Math.floor($matrixCanvas.width / 16);
-  matrixDrops = Array.from({ length: cols }, () => Math.floor(Math.random() * -50));
-}
-
-function drawMatrix() {
-  if (!state.matrixOn) { matrixAnimId = null; return; }
-  matrixCtx.fillStyle = 'rgba(0,0,0,0.05)';
-  matrixCtx.fillRect(0, 0, $matrixCanvas.width, $matrixCanvas.height);
-
-  // Use current theme colour
-  const style = getComputedStyle(document.body);
-  matrixCtx.fillStyle = style.getPropertyValue('--fg').trim() || '#00ff41';
-  matrixCtx.font = '14px Courier New';
-
-  matrixDrops.forEach((y, i) => {
-    const ch = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
-    matrixCtx.fillText(ch, i * 16, y * 16);
-    if (y * 16 > $matrixCanvas.height && Math.random() > 0.975) {
-      matrixDrops[i] = 0;
-    } else {
-      matrixDrops[i]++;
+    function playHackSound() {
+      if (!state.soundOn || !audioCtx) return;
+      try {
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'square';
+            osc.frequency.value = 200 + Math.random() * 600;
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+          }, i * 120);
+        }
+      } catch (_) { }
     }
-  });
-  matrixAnimId = requestAnimationFrame(drawMatrix);
-}
 
-function toggleMatrix(on) {
-  state.matrixOn = on;
-  if (on) {
-    $matrixCanvas.classList.add('visible');
-    initMatrixDrops();
-    if (!matrixAnimId) drawMatrix();
-  } else {
-    $matrixCanvas.classList.remove('visible');
-    matrixCtx.clearRect(0, 0, $matrixCanvas.width, $matrixCanvas.height);
-  }
-}
+    /* ── Matrix rain ──────────────────────────────────────────── */
+    let matrixAnimId = null;
+    const matrixCtx = $matrixCanvas.getContext('2d');
+    const MATRIX_CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()';
 
-/* ── Glitch effect ────────────────────────────────────────── */
-let glitchTimeout = null;
+    function resizeMatrix() {
+      $matrixCanvas.width = window.innerWidth;
+      $matrixCanvas.height = window.innerHeight;
+    }
 
-function triggerGlitch(duration = 300) {
-  if (!state.glitchOn) return;
-  $output.setAttribute('data-text', $output.textContent);
-  $output.classList.add('glitch');
-  clearTimeout(glitchTimeout);
-  glitchTimeout = setTimeout(() => $output.classList.remove('glitch'), duration);
-}
+    let matrixDrops = [];
 
-/* ── Progress ─────────────────────────────────────────────── */
-function updateProgress() {
-  const src = CODE_SOURCES[state.codeKey];
-  const pct = Math.min(100, Math.round((state.codePos / src.length) * 100));
-  $progressBar.style.width = pct + '%';
-  $progressPct.textContent = pct + '%';
-  if (pct >= 100) {
-    $statusText.textContent = 'COMPLETE';
-    state.codePos = 0; // loop
-  }
-}
+    function initMatrixDrops() {
+      resizeMatrix();
+      const cols = Math.floor($matrixCanvas.width / 16);
+      matrixDrops = Array.from({ length: cols }, () => Math.floor(Math.random() * -50));
+    }
 
-/* ── Terminal output management ───────────────────────────── */
-const MAX_OUTPUT_CHARS = 40000;
-let   outputBuffer     = '';
+    function drawMatrix() {
+      if (!state.matrixOn) { matrixAnimId = null; return; }
+      matrixCtx.fillStyle = 'rgba(0,0,0,0.05)';
+      matrixCtx.fillRect(0, 0, $matrixCanvas.width, $matrixCanvas.height);
 
-function appendOutput(text) {
-  outputBuffer += text;
-  if (outputBuffer.length > MAX_OUTPUT_CHARS) {
-    outputBuffer = outputBuffer.slice(outputBuffer.length - MAX_OUTPUT_CHARS);
-  }
-  $output.textContent = outputBuffer;
-  $output.scrollTop   = $output.scrollHeight;
-}
+      // Use current theme colour
+      const style = getComputedStyle(document.body);
+      matrixCtx.fillStyle = style.getPropertyValue('--fg').trim() || '#00ff41';
+      matrixCtx.font = '14px Courier New';
 
-function clearTerminal() {
-  outputBuffer  = '';
-  $output.textContent = '';
-  state.codePos = 0;
-  state.typedCount = 0;
-  updateProgress();
-  $statusText.textContent = 'READY';
-}
+      matrixDrops.forEach((y, i) => {
+        const ch = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+        matrixCtx.fillText(ch, i * 16, y * 16);
+        if (y * 16 > $matrixCanvas.height && Math.random() > 0.975) {
+          matrixDrops[i] = 0;
+        } else {
+          matrixDrops[i]++;
+        }
+      });
+      matrixAnimId = requestAnimationFrame(drawMatrix);
+    }
 
-/* ── Typing simulation ────────────────────────────────────── */
-function typeNextChars() {
-  const src   = CODE_SOURCES[state.codeKey];
-  const n     = state.charsPerKey;
-  const chunk = src.slice(state.codePos, state.codePos + n);
-  if (!chunk) {
-    state.codePos = 0;
-    return;
-  }
-  state.codePos    += chunk.length;
-  state.typedCount += chunk.length;
-  appendOutput(chunk);
-  updateProgress();
+    function toggleMatrix(on) {
+      state.matrixOn = on;
+      if (on) {
+        $matrixCanvas.classList.add('visible');
+        initMatrixDrops();
+        if (!matrixAnimId) drawMatrix();
+      } else {
+        $matrixCanvas.classList.remove('visible');
+        matrixCtx.clearRect(0, 0, $matrixCanvas.width, $matrixCanvas.height);
+      }
+    }
 
-  // Random glitch burst (1 in 80 keystrokes)
-  if (state.glitchOn && Math.random() < 0.0125) {
-    triggerGlitch(200);
-  }
+    /* ── Glitch effect ────────────────────────────────────────── */
+    let glitchTimeout = null;
 
-  // Update status
-  if ($statusText.textContent !== 'HACKING…') {
-    $statusText.textContent = 'HACKING…';
-  }
-}
+    function triggerGlitch(duration = 300) {
+      if (!state.glitchOn) return;
+      $output.setAttribute('data-text', $output.textContent);
+      $output.classList.add('glitch');
+      clearTimeout(glitchTimeout);
+      glitchTimeout = setTimeout(() => $output.classList.remove('glitch'), duration);
+    }
 
-/* ── Access overlay ───────────────────────────────────────── */
-let accessTimeout = null;
+    /* ── Rewards ─────────────────────────────────────────────── */
+    let rewardToastTimeout = null;
 
-function showAccess(granted) {
-  clearTimeout(accessTimeout);
-  $accessBox.className = granted ? 'granted' : 'denied';
-  $accessIcon.textContent  = granted ? '🔓' : '🔒';
-  $accessText.textContent  = granted ? 'ACCESS GRANTED' : 'ACCESS DENIED';
-  $accessSubtext.textContent = granted
-    ? 'WELCOME, LEVEL-5 OPERATIVE'
-    : 'INTRUDER DETECTED — TRACE IN PROGRESS';
-  $accessOverlay.classList.remove('hidden');
-  playAccessSound(granted);
-  if (granted && state.glitchOn) triggerGlitch(500);
-  accessTimeout = setTimeout(() => $accessOverlay.classList.add('hidden'), 2800);
-}
+    function updateRewards() {
+      $rewardBalance.textContent = '⛃ ' + state.credits;
+    }
 
-/* ── Hack sequence (F3) ───────────────────────────────────── */
-function runHackSequence() {
-  let hackDiv = document.getElementById('hack-sequence');
-  if (!hackDiv) {
-    hackDiv = document.createElement('div');
-    hackDiv.id = 'hack-sequence';
-    hackDiv.innerHTML = `
+    function showRewardToast(message) {
+      $rewardToast.textContent = message;
+      $rewardToast.classList.add('visible');
+      clearTimeout(rewardToastTimeout);
+      rewardToastTimeout = setTimeout(() => {
+        $rewardToast.classList.remove('visible');
+      }, 1400);
+    }
+
+    function grantReward(amount, reason, cooldownMs = 0, cooldownKey = '') {
+      const now = Date.now();
+      if (cooldownKey && cooldownMs > 0) {
+        const lastAt = state.rewardCooldowns[cooldownKey] || 0;
+        if (now - lastAt < cooldownMs) return false;
+        state.rewardCooldowns[cooldownKey] = now;
+      }
+
+      state.credits += amount;
+      updateRewards();
+      showRewardToast('+' + amount + ' CREDITS — ' + reason);
+      return true;
+    }
+
+    /* ── Progress ─────────────────────────────────────────────── */
+    function updateProgress() {
+      const src = CODE_SOURCES[state.codeKey];
+      const pct = Math.min(100, Math.round((state.codePos / src.length) * 100));
+      $progressBar.style.width = pct + '%';
+      $progressPct.textContent = pct + '%';
+      if (pct >= 100) {
+        grantReward(25, 'SEGMENT COMPLETE', 1200, 'segment-complete');
+        $statusText.textContent = 'COMPLETE';
+        state.codePos = 0; // loop
+      }
+    }
+
+    /* ── Terminal output management ───────────────────────────── */
+    const MAX_OUTPUT_CHARS = 40000;
+    let outputBuffer = '';
+
+    function appendOutput(text) {
+      outputBuffer += text;
+      if (outputBuffer.length > MAX_OUTPUT_CHARS) {
+        outputBuffer = outputBuffer.slice(outputBuffer.length - MAX_OUTPUT_CHARS);
+      }
+      $output.textContent = outputBuffer;
+      $output.scrollTop = $output.scrollHeight;
+    }
+
+    function clearTerminal() {
+      outputBuffer = '';
+      $output.textContent = '';
+      state.codePos = 0;
+      state.typedCount = 0;
+      updateProgress();
+      $statusText.textContent = 'READY';
+    }
+
+    /* ── Typing simulation ────────────────────────────────────── */
+    function typeNextChars() {
+      const src = CODE_SOURCES[state.codeKey];
+      const n = state.charsPerKey;
+      const chunk = src.slice(state.codePos, state.codePos + n);
+      if (!chunk) {
+        state.codePos = 0;
+        return;
+      }
+      state.codePos += chunk.length;
+      state.typedCount += chunk.length;
+      state.rewardMeter += chunk.length;
+
+      while (state.rewardMeter >= 100) {
+        state.rewardMeter -= 100;
+        grantReward(10, 'DATA EXFILTRATED');
+      }
+
+      appendOutput(chunk);
+      updateProgress();
+
+      // Random glitch burst (1 in 80 keystrokes)
+      if (state.glitchOn && Math.random() < 0.0125) {
+        triggerGlitch(200);
+      }
+
+      // Update status
+      if ($statusText.textContent !== 'HACKING…') {
+        $statusText.textContent = 'HACKING…';
+      }
+    }
+
+    /* ── Access overlay ───────────────────────────────────────── */
+    let accessTimeout = null;
+
+    function showAccess(granted) {
+      clearTimeout(accessTimeout);
+      $accessBox.className = granted ? 'granted' : 'denied';
+      $accessIcon.textContent = granted ? '🔓' : '🔒';
+      $accessText.textContent = granted ? 'ACCESS GRANTED' : 'ACCESS DENIED';
+      $accessSubtext.textContent = granted
+        ? 'WELCOME, LEVEL-5 OPERATIVE'
+        : 'INTRUDER DETECTED — TRACE IN PROGRESS';
+      $accessOverlay.classList.remove('hidden');
+      playAccessSound(granted);
+      if (granted) grantReward(30, 'ACCESS BONUS', 4000, 'access-bonus');
+      if (granted && state.glitchOn) triggerGlitch(500);
+      accessTimeout = setTimeout(() => $accessOverlay.classList.add('hidden'), 2800);
+    }
+
+    /* ── Hack sequence (F3) ───────────────────────────────────── */
+    function runHackSequence() {
+      let hackDiv = document.getElementById('hack-sequence');
+      if (!hackDiv) {
+        hackDiv = document.createElement('div');
+        hackDiv.id = 'hack-sequence';
+        hackDiv.innerHTML = `
       <div id="hack-sequence-title">⚡ INITIATING HACK SEQUENCE ⚡</div>
       <div id="hack-sequence-count">5</div>
       <div id="hack-sequence-status">BYPASSING INTRUSION DETECTION…</div>
     `;
-    document.body.appendChild(hackDiv);
-  }
-  const countEl  = hackDiv.querySelector('#hack-sequence-count');
-  const statusEl = hackDiv.querySelector('#hack-sequence-status');
-  const statuses = [
-    'BYPASSING INTRUSION DETECTION…',
-    'CRACKING ENCRYPTION KEYS…',
-    'INJECTING PAYLOAD…',
-    'UPLOADING ROOTKIT…',
-    'ESTABLISHING BACKDOOR…',
-  ];
-  hackDiv.classList.add('visible');
-  playHackSound();
-  let count = 5;
-  const iv = setInterval(() => {
-    count--;
-    countEl.textContent  = count;
-    statusEl.textContent = statuses[5 - count - 1] || 'FINALISING…';
-    playHackSound();
-    if (state.glitchOn) triggerGlitch(150);
-    if (count <= 0) {
-      clearInterval(iv);
-      setTimeout(() => {
-        hackDiv.classList.remove('visible');
-        showAccess(true);
-      }, 400);
+        document.body.appendChild(hackDiv);
+      }
+      const countEl = hackDiv.querySelector('#hack-sequence-count');
+      const statusEl = hackDiv.querySelector('#hack-sequence-status');
+      const statuses = [
+        'BYPASSING INTRUSION DETECTION…',
+        'CRACKING ENCRYPTION KEYS…',
+        'INJECTING PAYLOAD…',
+        'UPLOADING ROOTKIT…',
+        'ESTABLISHING BACKDOOR…',
+      ];
+      hackDiv.classList.add('visible');
+      playHackSound();
+      let count = 5;
+      const iv = setInterval(() => {
+        count--;
+        countEl.textContent = count;
+        statusEl.textContent = statuses[5 - count - 1] || 'FINALISING…';
+        playHackSound();
+        if (state.glitchOn) triggerGlitch(150);
+        if (count <= 0) {
+          clearInterval(iv);
+          setTimeout(() => {
+            hackDiv.classList.remove('visible');
+            grantReward(120, 'HACK SEQUENCE COMPLETE', 5000, 'hack-complete');
+            showAccess(true);
+          }, 400);
+        }
+      }, 800);
     }
-  }, 800);
-}
 
-/* ── Splash screen ────────────────────────────────────────── */
-function hideSplash() {
-  if (!state.started) {
-    state.started = true;
-    $splash.classList.add('hide');
-    setTimeout(() => { $splash.style.display = 'none'; }, 650);
-  }
-}
+    /* ── Splash screen ────────────────────────────────────────── */
+    function hideSplash() {
+      if (!state.started) {
+        state.started = true;
+        $splash.classList.add('hide');
+        setTimeout(() => { $splash.style.display = 'none'; }, 650);
+      }
+    }
 
-(function animateSplashLoader() {
-  let w = 0;
-  const iv = setInterval(() => {
-    w += 1 + Math.random() * 3;
-    $splashLoaderBar.style.width = Math.min(w, 100) + '%';
-    if (w >= 100) clearInterval(iv);
-  }, 60);
-}());
+    (function animateSplashLoader() {
+      let w = 0;
+      const iv = setInterval(() => {
+        w += 1 + Math.random() * 3;
+        $splashLoaderBar.style.width = Math.min(w, 100) + '%';
+        if (w >= 100) clearInterval(iv);
+      }, 60);
+    }());
 
-/* ── Settings panel ───────────────────────────────────────── */
-$settingsBtn.addEventListener('click', () => {
-  $settingsPanel.classList.toggle('hidden');
-});
-$settingsClose.addEventListener('click', () => {
-  $settingsPanel.classList.add('hidden');
-});
-
-// Theme buttons
-document.getElementById('theme-btns').addEventListener('click', e => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  const theme = btn.dataset.theme;
-  document.querySelectorAll('#theme-btns button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.body.className = 'theme-' + theme;
-  state.theme = theme;
-  // Reinit matrix colours
-  if (state.matrixOn) initMatrixDrops();
-});
-
-// Code source buttons
-document.getElementById('code-btns').addEventListener('click', e => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  document.querySelectorAll('#code-btns button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  state.codeKey = btn.dataset.code;
-  state.codePos = 0;
-  updateProgress();
-});
-
-// Speed buttons
-document.getElementById('speed-btns').addEventListener('click', e => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  document.querySelectorAll('#speed-btns button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  state.charsPerKey = parseInt(btn.dataset.speed, 10);
-});
-
-// Toggles
-document.getElementById('toggle-scanlines').addEventListener('change', e => {
-  state.scanlinesOn = e.target.checked;
-  $scanlines.style.display = e.target.checked ? '' : 'none';
-});
-
-document.getElementById('toggle-matrix').addEventListener('change', e => {
-  toggleMatrix(e.target.checked);
-});
-
-document.getElementById('toggle-glitch').addEventListener('change', e => {
-  state.glitchOn = e.target.checked;
-});
-
-document.getElementById('toggle-sound').addEventListener('change', e => {
-  state.soundOn = e.target.checked;
-});
-
-/* ── Keyboard handler ─────────────────────────────────────── */
-function isModifierOnly(e) {
-  return ['Control', 'Alt', 'Shift', 'Meta', 'CapsLock', 'Tab'].includes(e.key);
-}
-
-document.addEventListener('keydown', e => {
-  // Don't intercept if settings panel is focused on an input
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-
-  ensureAudio();
-
-  // Function key shortcuts
-  if (e.key === 'F1')  { e.preventDefault(); showAccess(true);  return; }
-  if (e.key === 'F2')  { e.preventDefault(); showAccess(false); return; }
-  if (e.key === 'F3')  { e.preventDefault(); runHackSequence(); return; }
-  if (e.key === 'F4')  { e.preventDefault(); triggerGlitch(600); return; }
-  if (e.key === 'Escape') {
-    // Close settings or access overlay first; if neither open, clear terminal
-    if (!$settingsPanel.classList.contains('hidden')) {
+    /* ── Settings panel ───────────────────────────────────────── */
+    $settingsBtn.addEventListener('click', () => {
+      $settingsPanel.classList.toggle('hidden');
+    });
+    $settingsClose.addEventListener('click', () => {
       $settingsPanel.classList.add('hidden');
-    } else if (!$accessOverlay.classList.contains('hidden')) {
-      $accessOverlay.classList.add('hidden');
-    } else {
-      clearTerminal();
+    });
+
+    // Theme buttons
+    document.getElementById('theme-btns').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const theme = btn.dataset.theme;
+      document.querySelectorAll('#theme-btns button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.body.className = 'theme-' + theme;
+      state.theme = theme;
+      // Reinit matrix colours
+      if (state.matrixOn) initMatrixDrops();
+    });
+
+    // Code source buttons
+    document.getElementById('code-btns').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      document.querySelectorAll('#code-btns button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.codeKey = btn.dataset.code;
+      state.codePos = 0;
+      updateProgress();
+    });
+
+    // Speed buttons
+    document.getElementById('speed-btns').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      document.querySelectorAll('#speed-btns button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.charsPerKey = parseInt(btn.dataset.speed, 10);
+    });
+
+    // Toggles
+    document.getElementById('toggle-scanlines').addEventListener('change', e => {
+      state.scanlinesOn = e.target.checked;
+      $scanlines.style.display = e.target.checked ? '' : 'none';
+    });
+
+    document.getElementById('toggle-matrix').addEventListener('change', e => {
+      toggleMatrix(e.target.checked);
+    });
+
+    document.getElementById('toggle-glitch').addEventListener('change', e => {
+      state.glitchOn = e.target.checked;
+    });
+
+    document.getElementById('toggle-sound').addEventListener('change', e => {
+      state.soundOn = e.target.checked;
+    });
+
+    /* ── Keyboard handler ─────────────────────────────────────── */
+    function isModifierOnly(e) {
+      return ['Control', 'Alt', 'Shift', 'Meta', 'CapsLock', 'Tab'].includes(e.key);
     }
-    return;
-  }
-  if (e.key === 'F11') return; // Let browser handle fullscreen
 
-  if (isModifierOnly(e)) return;
+    document.addEventListener('keydown', e => {
+      // Don't intercept if settings panel is focused on an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
-  // Hide splash on first real keystroke
-  hideSplash();
+      ensureAudio();
 
-  playKeyClick();
-  typeNextChars();
-});
+      // Function key shortcuts
+      if (e.key === 'F1') { e.preventDefault(); showAccess(true); return; }
+      if (e.key === 'F2') { e.preventDefault(); showAccess(false); return; }
+      if (e.key === 'F3') { e.preventDefault(); runHackSequence(); return; }
+      if (e.key === 'F4') { e.preventDefault(); triggerGlitch(600); return; }
+      if (e.key === 'Escape') {
+        // Close settings or access overlay first; if neither open, clear terminal
+        if (!$settingsPanel.classList.contains('hidden')) {
+          $settingsPanel.classList.add('hidden');
+        } else if (!$accessOverlay.classList.contains('hidden')) {
+          $accessOverlay.classList.add('hidden');
+        } else {
+          clearTerminal();
+        }
+        return;
+      }
+      if (e.key === 'F11') return; // Let browser handle fullscreen
 
-/* ── Touch / mobile support ───────────────────────────────── */
-let touchInput = null;
+      if (isModifierOnly(e)) return;
 
-function ensureTouchInput() {
-  if (touchInput) return;
-  // Hidden input to trigger virtual keyboard on mobile
-  touchInput = document.createElement('input');
-  touchInput.style.cssText = 'position:fixed;opacity:0;top:0;left:0;width:1px;height:1px;font-size:16px;';
-  touchInput.setAttribute('autocomplete', 'off');
-  touchInput.setAttribute('autocorrect',  'off');
-  touchInput.setAttribute('autocapitalize', 'none');
-  touchInput.setAttribute('spellcheck', 'false');
-  document.body.appendChild(touchInput);
-  touchInput.addEventListener('input', () => {
-    ensureAudio();
-    hideSplash();
-    playKeyClick();
-    typeNextChars();
-    // Clear so every input fires
-    touchInput.value = '';
-  });
-}
+      // Hide splash on first real keystroke
+      hideSplash();
 
-document.addEventListener('touchstart', e => {
-  // Don't interfere with settings panel controls
-  if (e.target.closest('#settings-panel') || e.target.closest('#access-overlay')) return;
-  ensureTouchInput();
-  hideSplash();
-  touchInput.focus();
-  ensureAudio();
-  playKeyClick();
-  typeNextChars();
-}, { passive: true });
+      playKeyClick();
+      typeNextChars();
+    });
 
-/* ── Click to dismiss overlays ────────────────────────────── */
-$accessOverlay.addEventListener('click', () => {
-  $accessOverlay.classList.add('hidden');
-});
+    /* ── Touch / mobile support ───────────────────────────────── */
+    let touchInput = null;
 
-/* ── Window resize ────────────────────────────────────────── */
-window.addEventListener('resize', () => {
-  if (state.matrixOn) resizeMatrix();
-});
+    function ensureTouchInput() {
+      if (touchInput) return;
+      // Hidden input to trigger virtual keyboard on mobile
+      touchInput = document.createElement('input');
+      touchInput.style.cssText = 'position:fixed;opacity:0;top:0;left:0;width:1px;height:1px;font-size:16px;';
+      touchInput.setAttribute('autocomplete', 'off');
+      touchInput.setAttribute('autocorrect', 'off');
+      touchInput.setAttribute('autocapitalize', 'none');
+      touchInput.setAttribute('spellcheck', 'false');
+      document.body.appendChild(touchInput);
+      touchInput.addEventListener('input', () => {
+        ensureAudio();
+        hideSplash();
+        playKeyClick();
+        typeNextChars();
+        // Clear so every input fires
+        touchInput.value = '';
+      });
+    }
 
-/* ── Ticker — duplicate content for seamless loop ── */
-(function initTicker() {
-  const track = document.getElementById('ticker-track');
-  if (!track) return;
-  // Duplicate all items so the CSS animation loops without a jump
-  const items = Array.from(track.children);
-  items.forEach(item => track.appendChild(item.cloneNode(true)));
-}());
+    document.addEventListener('touchstart', e => {
+      // Don't interfere with settings panel controls
+      if (e.target.closest('#settings-panel') || e.target.closest('#access-overlay')) return;
+      ensureTouchInput();
+      hideSplash();
+      touchInput.focus();
+      ensureAudio();
+      playKeyClick();
+      typeNextChars();
+    }, { passive: true });
 
-/* ── Init ─────────────────────────────────────────────────── */
-updateProgress();
+    /* ── Click to dismiss overlays ────────────────────────────── */
+    $accessOverlay.addEventListener('click', () => {
+      $accessOverlay.classList.add('hidden');
+    });
+
+    /* ── Window resize ────────────────────────────────────────── */
+    window.addEventListener('resize', () => {
+      if (state.matrixOn) resizeMatrix();
+    });
+
+    /* ── Ticker — duplicate content for seamless loop ── */
+    (function initTicker() {
+      const track = document.getElementById('ticker-track');
+      if (!track) return;
+      // Duplicate all items so the CSS animation loops without a jump
+      const items = Array.from(track.children);
+      items.forEach(item => track.appendChild(item.cloneNode(true)));
+    }());
+
+    /* ── Init ─────────────────────────────────────────────────── */
+    updateProgress();
+    updateRewards();
 
   </script>
 </body>
+
 </html>
