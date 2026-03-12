@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HackerSim — Elite Hacking Terminal</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-green">
+
+  <!-- Scanline overlay -->
+  <div id="scanlines"></div>
+
+  <!-- CRT flicker overlay -->
+  <div id="crt-flicker"></div>
+
+  <!-- Matrix rain canvas (background) -->
+  <canvas id="matrix-canvas"></canvas>
+
+  <!-- Main terminal -->
+  <div id="terminal-wrapper">
+    <div id="terminal-header">
+      <span id="terminal-title">root@hackersim:~# <span id="status-text">READY</span></span>
+      <div id="header-controls">
+        <span id="progress-label">PROGRESS:</span>
+        <div id="progress-bar-container"><div id="progress-bar"></div></div>
+        <span id="progress-percent">0%</span>
+        <button id="settings-btn" title="Settings">⚙</button>
+      </div>
+    </div>
+    <div id="terminal-output" aria-live="polite" aria-label="Terminal output"></div>
+    <div id="cursor-line">
+      <span id="typed-display"></span><span class="cursor" id="blink-cursor">█</span>
+    </div>
+  </div>
+
+  <!-- Access Granted / Denied overlay -->
+  <div id="access-overlay" class="hidden">
+    <div id="access-box">
+      <div id="access-icon"></div>
+      <div id="access-text"></div>
+      <div id="access-subtext"></div>
+    </div>
+  </div>
+
+  <!-- Settings panel -->
+  <div id="settings-panel" class="hidden">
+    <div id="settings-inner">
+      <h2>⚙ Settings</h2>
+      <button id="settings-close">✕ Close</button>
+
+      <section>
+        <h3>Theme</h3>
+        <div class="btn-group" id="theme-btns">
+          <button data-theme="green" class="active">Green</button>
+          <button data-theme="amber">Amber</button>
+          <button data-theme="blue">Blue</button>
+          <button data-theme="white">White</button>
+          <button data-theme="red">Red</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Code Source</h3>
+        <div class="btn-group" id="code-btns">
+          <button data-code="linux" class="active">Linux Kernel (C)</button>
+          <button data-code="python">AI Python</button>
+          <button data-code="js">React JS</button>
+          <button data-code="matrix">Matrix Gibberish</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Chars per Keystroke</h3>
+        <div class="btn-group" id="speed-btns">
+          <button data-speed="1">1</button>
+          <button data-speed="2">2</button>
+          <button data-speed="3" class="active">3</button>
+          <button data-speed="5">5</button>
+          <button data-speed="8">8</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Effects</h3>
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-scanlines" checked />
+          CRT Scanlines
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-matrix" />
+          Matrix Rain Background
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-glitch" checked />
+          Glitch Effects
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-sound" checked />
+          Sound Effects
+        </label>
+      </section>
+
+      <section>
+        <h3>Shortcuts</h3>
+        <table class="shortcuts-table">
+          <tr><td><kbd>F1</kbd></td><td>ACCESS GRANTED popup</td></tr>
+          <tr><td><kbd>F2</kbd></td><td>ACCESS DENIED popup</td></tr>
+          <tr><td><kbd>F3</kbd></td><td>Initiate HACK SEQUENCE</td></tr>
+          <tr><td><kbd>F4</kbd></td><td>Screen glitch burst</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Clear terminal</td></tr>
+          <tr><td><kbd>F11</kbd></td><td>Fullscreen</td></tr>
+        </table>
+      </section>
+
+      <p class="settings-hint">Start typing anywhere to begin the simulation.</p>
+    </div>
+  </div>
+
+  <!-- Splash / intro screen -->
+  <div id="splash">
+    <div id="splash-inner">
+      <pre id="splash-logo">
+ _   _            _             ____  _
+| | | | __ _  ___| | _____ _ __/ ___|(_)_ __ ___
+| |_| |/ _` |/ __| |/ / _ \ '__\___ \| | '_ ` _ \
+|  _  | (_| | (__|   <  __/ |   ___) | | | | | | |
+|_| |_|\__,_|\___|_|\_\___|_|  |____/|_|_| |_| |_|
+      </pre>
+      <p id="splash-tagline">Elite Hacking Terminal v2.0</p>
+      <p id="splash-instruction">Press any key or tap to begin…</p>
+      <div id="splash-loader"><div id="splash-loader-bar"></div></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
