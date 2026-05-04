@@ -2,14 +2,30 @@
 
 A hackertyper-style hacking simulator that runs **entirely from a single local HTML file** — no server, no internet connection needed.
 
-## ⬇️ How to download and run
+## 🔧The setup
 
-1. Click **`index.html`** in the file list above and press the download button.
+### 🌐 On the internet
+
+Click on this link or the link in the description.
+
+> **Requirements**: Internet access and a program to run HTML files (browser).
+
+### ⬇️ Locally
+
+#### Technique A
+
+1. Click **`index.html`** in the **`/docs`** directory above and press the download button.
 2. Save `index.html` anywhere on your computer (Desktop, Downloads, etc.).
 3. **Double-click** it in File Explorer (Windows) / Finder (macOS) — it opens straight in your browser.
 4. Click, tap, or press any key to start hacking!
 
-> Works in Chrome, Firefox, Edge, and Safari. No install, no internet, no server required.
+#### Technique B
+
+1. Clone this repo locally.
+2. Open **`index.html`** on your browser.
+3. Click, tap, or press any key to start hacking!
+
+> **Works** in Chrome, Firefox, Edge, and Safari. No install, no internet, no server required. Just a program that runs HTML files.
 
 ---
 
