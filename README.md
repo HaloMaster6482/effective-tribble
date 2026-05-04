@@ -6,7 +6,7 @@ A hackertyper-style hacking simulator that runs **entirely from a single local H
 
 ### 🌐 On the internet
 
-Click on this [link](https://halomaster6482.github.io/HackerSim/) or the link in the [about section](https://github.com/HaloMaster6482/HackerSim) of this repo.
+Click on this [link](https://halomaster6482.github.io/HackerSim/) or the link in the about section of this repo.
 
 > **Requirements**: Internet access and a program to run HTML files (browser).
 
